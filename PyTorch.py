@@ -45,3 +45,17 @@ print(c)
 c = torch.sqrt(torch.square(a) + torch.square(b))
 c.backward(torch.eye(2)) #eye == 2x2 identity matrix
 print(a.grad)
+
+#Example: Optimization Using  Gradient Descent
+x = torch.zeros(2,requires_grad=True)
+f = lambda x : (x-torch.tensor([3,-2])).pow(2).sum()
+lr = 0.1
+
+for i in range(15):
+    y = f(x)
+    y.backward()
+    gr = x.grad
+    x.data.add_(-lr*gr)
+    x.grad.zero_()
+    print("Step {}: x[0]={}, x[1]={}".format(i,x[0],x[1]))
+    
