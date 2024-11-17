@@ -222,3 +222,38 @@ plot_dataset(train_x, train_labels, net.W.detach().numpy(),net.b.detach().numpy(
 pred = torch.sigmoid(net.forward(torch.tensor(valid_x)))
 torch.mean(((pred.view(-1)>0.5)==(torch.tensor(valid_labels)>0.5)).type(torch.float32))
 print(pred)
+
+#Neural Networks and Optimizers
+net = torch.nn.Linear(2,1) #2inputs 1output
+print(list(net.parameters()))
+
+optim = torch.optim.SGD(net.parameters(), lr=0.1)
+
+val_x = torch.tensor(valid_x)
+val_lab = torch.tensor(valid_labels)
+
+for ep in range(10):
+    for (x,y) in dataloader:
+        z = net(x).flatten()
+        loss = torch.nn.functional.binary_cross_entropy_with_logits(z,y)
+        optim.zero_grad()
+        loss.backward()
+        optim.step()
+    acc = ((torch.sigmoid(net(val_x).flatten())>0.5).float()==val_lab).float().mean()
+    print(f"Epoch {ep}: last batch loss = {loss}, val acc = {acc}")
+    
+def train(net, dataloader, val_x, val_lab, epochs=10, lr=0.5):
+    optim = torch.optim.Adam(net.parameters(), lr=lr)
+    for ep in range(epochs):
+        for (x,y) in dataloader:
+            z = net(x).flatten()
+            loss = torch.nn.functional.binary_cross_entropy_with_logits(z,y)
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
+        acc = ((torch.sigmoid(net(val_x).flatten())>0.5).float()==val_lab).float().mean()
+        print(f"Epoch {ep}: last batch loss = {loss}, val acc = {acc}")
+
+net = torch.nn.Linear(2,1)
+train(net, dataloader, val_x, val_lab, lr=0.03)
+
