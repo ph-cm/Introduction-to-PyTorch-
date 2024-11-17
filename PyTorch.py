@@ -262,3 +262,22 @@ net = torch.nn.Sequential(torch.nn.Linear(2,5), torch.nn.Sigmoid(), torch.nn.Lin
 print(net)
 
 train(net, dataloader, val_x, val_lab)
+
+#Defining a Network as a Class
+class MyNet(torch.nn.Module):
+    def __init__(self, hidden_size = 10, func=torch.nn.Sigmoid()):
+        super().__init__()
+        self.fc1 = torch.nn.Linear(2,hidden_size)
+        self.func = func
+        self.fc2 = torch.nn.Linear(hidden_size, 1)
+        
+    def forward(self,x):
+        x = self.fc1(x)
+        x = self.func(x)
+        x = self.fc2(x)
+        return x
+    
+net = MyNet(func=torch.nn.ReLU())
+print(net)
+
+train(net, dataloader, val_x,val_lab, lr=0.005)
