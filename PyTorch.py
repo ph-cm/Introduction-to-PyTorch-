@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification, make_regression
 from sklearn.model_selection import train_test_split
 import random
+import pytorch_lightning as pl
 
 #Simple Tensors
 a = torch.tensor([[1,2],[3,4]])
@@ -281,3 +282,42 @@ net = MyNet(func=torch.nn.ReLU())
 print(net)
 
 train(net, dataloader, val_x,val_lab, lr=0.005)
+
+#Defining a Network as PyTorch Lightning Module
+
+class MyNetPL(pl.LightningModule):
+    def __init__(self, hidden_size = 10, func = torch.nn.Sigmoid()):
+        super().__init__()
+        self.fc1 = torch.nn.Linear(2, hidden_size)
+        self.func = func
+        self.fc2 = torch.nn.Linear(hidden_size, 1)
+        
+        self.val_epoch_num = 0 #logging
+        
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.func(x)
+        x = self.fc2(x)
+        return x
+        
+    def training_step(self, batch, batch_nb):
+        x, y = batchy_res = batch
+        y_res = self(x).view(-1)
+        loss = torch.nn.functional.binary_cross_entropy_with_logits(y_res, y)
+        return loss
+        
+    def configure_optimizers(self):
+        optimizer = torch.optim.SGD(self.parameters(), lr=0.005)
+        return optimizer
+    def validation_step(self, batch, btch_nb):
+        x,y = batch
+        y_res = self(x).view(-1)
+        val_loss = torch.nn.functional.binary_cross_entropy_with_logits(y_res, y)
+        print("Epoch ", self.val_epoch_num, ": val loss = ", val_loss.item(), " val acc ", ((torch.sigmoid(y_res.flatten())>0.5).float()==y).float().mean().item(), sep = "")
+        self.val_epoch_num += 1
+valid_dataset = torch.utils.data.TensorDataset(torch.tensor(valid_x), torch.tensor(valid_labels, dtype=torch.float32))
+valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size = 16)
+
+net = MyNetPL(func=torch.nn.ReLU())
+trainer = pl.Trainer(max_epochs = 30, log_every_n_steps = 1, accelerator='gpu', devices=1)
+trainer.fit(model = net, train_dataloaders= dataloader, val_dataloaders=valid_dataloader)
