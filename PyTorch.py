@@ -117,3 +117,33 @@ with torch.no_grad():
 plt.plot(x,y,color='red')
 plt.show()
     
+#Computation on GPU
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+ 
+print('Doing computations on ' + device)
+
+# Indicates devices
+w = torch.tensor([100.0], requires_grad=True, dtype = torch.float32, device=device)
+b = torch.zeros(size=(output_dim,), requires_grad=True, device=device)
+
+def f(x):
+    return torch.matmul(x,w) + b
+def compute_loss(labels, predictions):
+    return torch.mean(torch.square(labels - predictions))
+
+def train_on_batch(x, y):
+    predictions = f(x)
+    loss = compute_loss(y, predictions)
+    loss.backward()
+    w.data.sub_(learning_rate * w.grad)
+    b.data.sub_(learning_rate * b.grad)
+    w.grad.zero_()
+    b.grad.zero_()
+    return loss
+batch_size = 4
+for epoch in range(10):
+    for i in range(0, len(features), batch_size):
+        #move data to required device
+        loss = train_on_batch(features[i:i+batch_size].view(-1,1).to(device), labels[i:i+batch_size].to(device))
+    print('Epoch %d: last batch loss = %.4f' % (epoch, float(loss)))
+    
