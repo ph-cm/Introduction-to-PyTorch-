@@ -257,3 +257,8 @@ def train(net, dataloader, val_x, val_lab, epochs=10, lr=0.5):
 net = torch.nn.Linear(2,1)
 train(net, dataloader, val_x, val_lab, lr=0.03)
 
+# define Network as a sequence of layers
+net = torch.nn.Sequential(torch.nn.Linear(2,5), torch.nn.Sigmoid(), torch.nn.Linear(5,1))
+print(net)
+
+train(net, dataloader, val_x, val_lab)
