@@ -176,3 +176,49 @@ def plot_dataset(features, labels, W=None, b=None):
         ax.set_ylim(min_y, max_y)
     plt.show()
 plot_dataset(train_x, train_labels)
+
+#Training One-Layer Perceptron
+class Network():
+    def __init__(self):
+        self.W = torch.randn(size=(2,1), requires_grad=True)
+        self.b = torch.zeros(size=(1,), requires_grad=True)
+        
+    def forward(self, x):
+        return torch.matmul(x, self.W)+self.b
+    
+    def zero_grad(self):
+        self.W.data.zero_()
+        self.b.data.zero_()
+        
+    def update(self, lr=0.1):
+        self.W.data.sub_(lr*self.W.grad)
+        self.b.data.sub_(lr*self.b)
+        
+net = Network()
+
+def train_on_batch(net, x, y):
+    z = net.forward(x).flatten()
+    loss = torch.nn.functional.binary_cross_entropy_with_logits(input=z, target=y)
+    net.zero_grad()
+    loss.backward()
+    net.update()
+    return loss
+
+dataset = torch.utils.data.TensorDataset(torch.tensor(train_x), torch.tensor(train_labels,dtype=torch.float32))
+dataloader = torch.utils.data.DataLoader(dataset, batch_size=16)
+
+batch = next(iter(dataloader))
+print(batch)
+
+for epoch in range(15):
+    for (x, y) in dataloader:
+        loss = train_on_batch(net, x, y)
+    print('Epoch %d: last batch loss = %.4f' % (epoch, float(loss)))
+    
+print(net.W,net.b)
+
+plot_dataset(train_x, train_labels, net.W.detach().numpy(),net.b.detach().numpy())
+
+pred = torch.sigmoid(net.forward(torch.tensor(valid_x)))
+torch.mean(((pred.view(-1)>0.5)==(torch.tensor(valid_labels)>0.5)).type(torch.float32))
+print(pred)
